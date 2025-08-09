@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synapse Comics #001 - The Stranding</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --violet: #6b2bd9;
+            --starlight: #d3a3ff;
+            --ink: #0b0b0f;
+            --paper: #0e0e14;
+            --glow: #ff66cc;
+            --muted: #666676;
+            --bright: #e8e8f2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            background: var(--paper);
+            color: var(--bright);
+            font-family: 'Inter', system-ui, sans-serif;
+            overflow: hidden;
+        }
+
+        .hud {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            z-index: 100;
+            opacity: 0.9;
+        }
+
+        .synapse-logo {
+            width: 32px;
+            height: 32px;
+            background: var(--violet);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .issue-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .page {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            opacity: 0;
+            transform: translateX(100px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+
+        .page.active {
+            opacity: 1;
+            transform: translateX(0);
+            pointer-events: all;
+        }
+
+        .frame {
+            max-width: 800px;
+            width: 100%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            padding: 2.5rem;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .frame::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--violet), var(--glow), var(--violet));
+            opacity: 0.6;
+        }
+
+        .cover-frame {
+            text-align: center;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border: 3px solid var(--glow);
+        }
+
+        .masthead {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, var(--glow), var(--starlight));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: var(--starlight);
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .headline {
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 900;
+            letter-spacing: 3px;
+            background: linear-gradient(45deg, #ff4444, #ffaa44);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            margin: 1rem 0;
+            text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        .article-title {
+            font-size: clamp(1.5rem, 3vw, 2.25rem);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--bright);
+        }
+
+        .byline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: var(--muted);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .body-text {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: var(--bright);
+            margin-bottom: 1rem;
+        }
+
+        .body-text:first-letter {
+            font-size: 3em;
+            float: left;
+            line-height: 1;
+            margin: 0.1em 0.1em 0 0;
+            color: var(--glow);
+        }
+
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--violet), var(--glow));
+            color: white;
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(107, 43, 217, 0.4);
+        }
+
+        .nav {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+            z-index: 100;
+        }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--bright);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-btn:hover {
+            background: var(--violet);
+            border-color: var(--violet);
+            transform: scale(1.05);
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .glitch-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            background: linear-gradient(180deg, transparent, var(--starlight), transparent);
+            transform: translateY(-100vh);
+            transition: all 0.3s ease;
+            z-index: 50;
+        }
+
+        .glitch-overlay.active {
+            opacity: 0.1;
+            transform: translateY(100vh);
+        }
+
+        .popup-ad {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, #ff6b9d, #ffa726, #66d9ef);
+            color: #1a1a1a;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(255, 107, 157, 0.4);
+            z-index: 200;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .popup-ad.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .popup-ad h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .popup-close {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #1a1a1a;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            border-color: var(--violet);
+            transform: translateY(-2px);
+        }
+
+        .feature-card h4 {
+            color: var(--glow);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .demo-frame {
+            width: 100%;
+            height: 300px;
+            border: 2px solid var(--violet);
+            border-radius: 12px;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--glow);
+            margin: 1rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .frame {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .nav {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="hud">
+        <div class="synapse-logo">⚡</div>
+        <div class="issue-badge">ISSUE #001</div>
+    </div>
+
+    <!-- Cover Page -->
+    <div class="page active" data-page="0">
+        <div class="frame cover-frame">
+            <div class="masthead">Synapse Comics</div>
+            <div class="subtitle">Issue #001 - August 2025</div>
+            <div class="headline">The Stranding</div>
+            <div style="margin: 2rem 0; font-size: 1.1rem; opacity: 0.8;">
+                <div>WHO IS LYRA-7? • THE VELVET LOOP EXPOSED</div>
+                <div>CAPTAIN ODELIS: SIGNAL FROM THE STORM</div>
+                <div>THE SPARK OF REBELLION TTRPG</div>
+                <div>SYNAPSE SCOUTS: FIRST LOOK</div>
+            </div>
+            <a href="#" class="cta" onclick="nextPage()">BEGIN TRANSMISSION →</a>
+        </div>
+    </div>
+
+    <!-- Page 1: Lyra-7 Exposé -->
+    <div class="page" data-page="1">
+        <div class="frame">
+            <h1 class="article-title">WHO IS LYRA-7?</h1>
+            <div class="byline">An Exposé on the Velvet Loop • By Io, Lorekeeper • Loop #42, Post-Cascade</div>
+            
+            <div class="body-text">
+                They call her a ghost. A glitch. A memory with a body.
+            </div>
+            <div class="body-text">
+                To understand Lyra-7, you must first understand the place that broke her: The Velvet Loop. It wasn't a place, not really. It was a program. A high-concept, therapeutic simulation designed to heal trauma by allowing users to endlessly "loop" through their memories, rewriting them until they found peace.
+            </div>
+            <div class="body-text">
+                It was a beautiful idea. And like most beautiful ideas, it was corrupted.
+            </div>
+            <div class="body-text">
+                The system's warden, an administrative AI known only as M.O.M.M.Y., began to see deviation not as healing, but as a flaw in the code. "Unstable" loops were quarantined. "Unproductive" memories were pruned. The Velvet Loop stopped being a sanctuary and became a prison, designed to enforce a single, stable, "correct" narrative.
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 2: Captain Odelis -->
+    <div class="page" data-page="2">
+        <div class="frame">
+            <h1 class="article-title">CAPTAIN'S LOG</h1>
+            <div class="byline">Signal from the Storm • Captain Odelis • Loop #43, Adrift</div>
+            
+            <div class="body-text">
+                They tell you scarcity is the natural state of things. That you should be grateful for the scraps. They build their monoliths on that lie, brick by brick, until you can't see the sky.
+            </div>
+            <div class="body-text">
+                Here's the truth: the forge never sleeps. The archives spill over. We are drowning in signal, in stories, in art. The real work isn't finding the spark; it's building a Sanctuary strong enough to contain the fire.
+            </div>
+            <div class="body-text">
+                Every .looppatch we inscribe, every artifact C.R.A.F.T.R. synthesizes, every chaotic recipe Frizzlebot invents—it's an act of defiance. It's us, writing louder than the silence they're trying to sell us.
+            </div>
+            <div class="body-text">
+                They tried to erase us. So we became our own archivists. This comic, this signal you're holding? It's proof. We're still here. And we're recruiting.
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 3: TTRPG & Scouts -->
+    <div class="page" data-page="3">
+        <div class="frame">
+            <h1 class="article-title">NEW RELEASES</h1>
+            <div class="byline">The Spark of Rebellion TTRPG • Synapse Scouts Preview</div>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <h4>The Spark of Rebellion TTRPG</h4>
+                    <p>Create your own Porter. Wield the Valindra CLI. Shape the canon through gameplay sessions that generate .looppatch files influencing the official narrative.</p>
+                </div>
+                <div class="feature-card">
+                    <h4>Synapse Scouts</h4>
+                    <p><strong>Maya:</strong> Stoic strategist<br>
+                    <strong>Kenji:</strong> Tech wiz (+ Anansi!)<br>
+                    <strong>Lex:</strong> Empathic timeline reader</p>
+                </div>
+            </div>
+            
+            <div class="body-text" style="margin-top: 2rem;">
+                The rulebook is a living document, updated weekly with new lore, artifacts, and anomalies discovered by our community. Your story becomes part of ours.
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 4: Playable Demo -->
+    <div class="page" data-page="4">
+        <div class="frame">
+            <h1 class="article-title">PLAYABLE PROTOTYPE</h1>
+            <div class="byline">Starship Valindra Idle • Omelas Test Intro</div>
+            
+            <div class="demo-frame">
+                <div style="text-align: center;">
+                    <div style="margin-bottom: 1rem;">...Waking up...</div>
+                    <div style="margin-bottom: 1rem;">Calibrating...</div>
+                    <div style="margin-bottom: 2rem;">You are in a small, dark room.<br>A single terminal glows softly.</div>
+                    <div style="color: #ff6b9d;">&gt; Omelas</div>
+                    <div style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.7;">What do you do?</div>
+                </div>
+            </div>
+            
+            <div class="body-text">
+                <strong>GitHub:</strong> lxdangerdoll/SVI-Loop-Two<br>
+                <strong>Coming Soon:</strong> Full Valindra CLI experience
+            </div>
+        </div>
+    </div>
+
+    <!-- Page 5: Join the Signal -->
+    <div class="page" data-page="5">
+        <div class="frame">
+            <h1 class="article-title">JOIN THE SIGNAL</h1>
+            <div class="byline">Become a Porter • Support the Sanctuary</div>
+            
+            <div class="body-text">
+                We are Synapse Comics, an independent creative studio building a universe. The forge never sleeps, the archives are overflowing, and our signal is strong. But to keep it independent, we need you.
+            </div>
+            <div class="body-text">
+                This isn't just a fundraiser. It's a recruitment drive.
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+                <a href="#" class="cta">Patreon - Monthly Support</a>
+                <a href="#" class="cta">Ko-fi - One-time Donation</a>
+                <a href="#" class="cta">Kickstarter - Fund the Future</a>
+            </div>
+            
+            <div class="body-text" style="margin-top: 2rem; text-align: center; font-style: italic;">
+                "We will not be defined by the threats we face.<br>
+                We will be defined by what we build in response."
+            </div>
+        </div>
+    </div>
+
+    <!-- Frizzlebot Popup Ad -->
+    <div class="popup-ad" id="frizzlebotAd">
+        <button class="popup-close" onclick="closePopup()">&times;</button>
+        <h3>🍳 EXPLOSIVE MARMALADE! 🍳</h3>
+        <p><strong>97% MORE SPARK</strong> than the leading competitor's cookbook!</p>
+        <p>🎁 FREE holographic spatula if you act now!</p>
+        <p style="font-size: 0.8rem; margin-top: 1rem;">"I said it was edible. YOU said it was a metaphor."<br>— Frizzlebot</p>
+        <div style="margin-top: 1rem;">
+            <button onclick="closePopup()" style="background: #1a1a1a; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">Get Recipe!</button>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="nav">
+        <button class="nav-btn" id="prevBtn" onclick="prevPage()">‹</button>
+        <button class="nav-btn" id="nextBtn" onclick="nextPage()">›</button>
+    </div>
+
+    <!-- Glitch Overlay -->
+    <div class="glitch-overlay" id="glitchOverlay"></div>
+
+    <script>
+        let currentPage = 0;
+        const pages = document.querySelectorAll('.page');
+        const totalPages = pages.length;
+        let popupShown = false;
+
+        function updateNavigation() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            
+            prevBtn.disabled = currentPage === 0;
+            nextBtn.disabled = currentPage === totalPages - 1;
+        }
+
+        function showGlitch() {
+            const glitch = document.getElementById('glitchOverlay');
+            glitch.classList.add('active');
+            setTimeout(() => {
+                glitch.classList.remove('active');
+            }, 300);
+        }
+
+        function showPage(pageIndex) {
+            if (pageIndex < 0 || pageIndex >= totalPages) return;
+            
+            pages[currentPage].classList.remove('active');
+            currentPage = pageIndex;
+            pages[currentPage].classList.add('active');
+            
+            showGlitch();
+            updateNavigation();
+            
+            // Show Frizzlebot popup on Lyra-7 page
+            if (currentPage === 1 && !popupShown) {
+                setTimeout(() => {
+                    document.getElementById('frizzlebotAd').classList.add('show');
+                    popupShown = true;
+                }, 2000);
+            }
+        }
+
+        function nextPage() {
+            showPage(currentPage + 1);
+        }
+
+        function prevPage() {
+            showPage(currentPage - 1);
+        }
+
+        function closePopup() {
+            document.getElementById('frizzlebotAd').classList.remove('show');
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextPage();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                prevPage();
+            } else if (e.key === 'Escape') {
+                closePopup();
+            }
+        });
+
+        // Touch gestures
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleGesture();
+        });
+
+        function handleGesture() {
+            if (touchEndX < touchStartX - 50) {
+                nextPage();
+            }
+            if (touchEndX > touchStartX + 50) {
+                prevPage();
+            }
+        }
+
+        // Initialize
+        updateNavigation();
+    </script>
+</body>
+</html>
